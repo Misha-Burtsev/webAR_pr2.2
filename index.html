@@ -54,24 +54,29 @@
     let hitTestSource = null;
 
     document.getElementById('start').addEventListener('click', async () => {
-      const session = await navigator.xr.requestSession('immersive-ar', {
-        requiredFeatures: ['hit-test', 'local-floor'],
-      });
-      renderer.xr.setReferenceSpaceType('local-floor');
-      await renderer.xr.setSession(session);
+      try {
+        const session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['hit-test', 'local-floor'],
+        });
+        renderer.xr.setReferenceSpaceType('local-floor');
+        await renderer.xr.setSession(session);
 
-      // Луч hit-test идёт из центра экрана
-      const viewerSpace = await session.requestReferenceSpace('viewer');
-      hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+        // Луч hit-test идёт из центра экрана
+        const viewerSpace = await session.requestReferenceSpace('viewer');
+        hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
 
-      // Тап по экрану – ставим куб туда, где сейчас маркер.
-      // Куб добавляется в сцену, а не к камере, поэтому остаётся на месте.
-      session.addEventListener('select', () => {
-        if (!reticle.visible) return;
-        const cube = new THREE.Mesh(geometry, material);
-        reticle.matrix.decompose(cube.position, cube.quaternion, cube.scale);
-        scene.add(cube);
-      });
+        // Тап по экрану – ставим куб туда, где сейчас маркер.
+        // Куб добавляется в сцену, а не к камере, поэтому остаётся на месте.
+        session.addEventListener('select', () => {
+          if (!reticle.visible) return;
+          const cube = new THREE.Mesh(geometry, material);
+          reticle.matrix.decompose(cube.position, cube.quaternion, cube.scale);
+          scene.add(cube);
+        });
+      } catch (error) {
+        // Показываем, почему AR не запустился (нет WebXR, ARCore и т. п.)
+        alert('Не удалось запустить AR: ' + error.message);
+      }
     });
 
     renderer.setAnimationLoop((time, frame) => {
